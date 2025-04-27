@@ -221,12 +221,14 @@ exports.gamesLaunch = async (req, res) => {
       return res.send("It seems you are not logged in.");
     }
 
-    if (data.content) {
+    setTimeout(() => {
       data.destroy();
+    }, 20000);
+
+    if (data.content) {
       res.setHeader("Content-Type", "text/html");
       return res.send(data.content);
     } else {
-      data.destroy();
       return res.redirect(data.url);
     }
   } catch (err) {
