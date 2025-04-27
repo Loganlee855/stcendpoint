@@ -94,10 +94,10 @@ exports.deposit = async (req, res) => {
         }
 
         const betAmount = requestData.transactions?.[0]?.amount || 0;
-        const balance = member.balance / currency.rate;
+        const balance = Number(member.balance)/currency.rate;
 
-        member.balance = Number(member.balance) + parseFloat(betAmount);
-        member.totalCredit = Number(member.totalCredit) + parseFloat(betAmount);
+        member.balance = Number(member.balance) + parseFloat(betAmount * currency.rate);;
+        member.totalCredit = Number(member.totalCredit) + parseFloat(betAmount * currency.rate);;
         await member.save();
 
         await insertTransaction(batchRequests, currencyCode,member.agentCode,member.userCode,Number(balance),Number(member.balance));

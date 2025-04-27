@@ -1,5 +1,6 @@
 const Transaction = require('../models/Transaction');
 const GameList = require('../models/GameList');
+const Currency = require("../models/Currency");
 
 const insertTransaction = async (batchRequests = [], currencyCode,agentCode,userCode,before_balance,after_balance) => {
   for (const batch of batchRequests) {
@@ -15,6 +16,8 @@ const insertTransaction = async (batchRequests = [], currencyCode,agentCode,user
          },
       });
 
+      const currency = await Currency.findOne({ where: { code: currencyCode } });
+
       if (!check) {
         if (games) {
           await Transaction.create({
@@ -22,14 +25,14 @@ const insertTransaction = async (batchRequests = [], currencyCode,agentCode,user
             agentCode: agentCode,
             userCode: userCode,
             member_account: batch.member_account,
-            before_balance: before_balance,
-            after_balance: after_balance,
+            before_balance: before_balance/currency.rate,
+            after_balance: after_balance/currency.rate,
             action: trx.action,
-            amount: trx.amount,
+            amount: trx.amount/currency.rate,
             currency: currencyCode,
-            valid_bet_amount: trx.valid_bet_amount,
-            bet_amount: trx.bet_amount,
-            prize_amount: trx.prize_amount,
+            valid_bet_amount: trx.valid_bet_amount/currency.rate,
+            bet_amount: trx.bet_amount/currency.rate,
+            prize_amount: trx.prize_amount/currency.rate,
             tip_amount: trx.tip_amount,
             wager_code: trx.wager_code,
             wager_status: trx.wager_status,
@@ -48,14 +51,14 @@ const insertTransaction = async (batchRequests = [], currencyCode,agentCode,user
             agentCode: agentCode,
             userCode: userCode,
             member_account: batch.member_account,
-            before_balance: before_balance,
-            after_balance: after_balance,
+            before_balance: before_balance/currency.rate,
+            after_balance: after_balance/currency.rate,
             action: trx.action,
-            amount: trx.amount,
+            amount: trx.amount/currency.rate,
             currency: currencyCode,
-            valid_bet_amount: trx.valid_bet_amount,
-            bet_amount: trx.bet_amount,
-            prize_amount: trx.prize_amount,
+            valid_bet_amount: trx.valid_bet_amount/currency.rate,
+            bet_amount: trx.bet_amount/currency.rate,
+            prize_amount: trx.prize_amount/currency.rate,
             tip_amount: trx.tip_amount,
             wager_code: trx.wager_code,
             wager_status: trx.wager_status,

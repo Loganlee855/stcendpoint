@@ -22,9 +22,7 @@ exports.Withdraw = async (req, res) => {
         if (!requestData) return null;
 
         const expectedSign = await generateSign(
-          req.body.request_time,
-          "withdraw"
-        );
+          req.body.request_time,"withdraw");
 
         if (req.body.sign !== expectedSign) {
           return {
@@ -79,9 +77,10 @@ exports.Withdraw = async (req, res) => {
         }
 
         const betAmount = parseFloat(requestData.transactions?.[0]?.bet_amount || 0);
+        const betAmountc = parseFloat(betAmount * currency.rate);
         const balance = member.balance/currency.rate;
 
-        if (betAmount > Number(balance)) {
+        if (betAmountc > Number(member.balance)) {
           return {
             member_account: member.aasUserCode,
             product_code: requestData.product_code,
@@ -93,8 +92,8 @@ exports.Withdraw = async (req, res) => {
         }
 
         
-        member.balance -= betAmount;
-        member.totalDebit = Number(member.totalDebit) + parseFloat(betAmount);
+        member.balance -= parseFloat(betAmount * currency.rate);
+        member.totalDebit = Number(member.totalDebit) + parseFloat(betAmount * currency.rate);
         await member.save();
 
         await insertTransaction(batchRequests, currencyCode,member.agentCode,member.userCode,Number(balance),Number(member.balance));
