@@ -241,6 +241,70 @@ exports.gamesLaunch = async (req, res) => {
   }
 };
 
+exports.parentRoundHistoryDetails = async (req, res) => {
+  try {
+    const { t, i ,s } = req.query;
+
+    if (!req.query || !req.query.t) {
+      return res.status(403).render("error/404");
+    } else if (!req.query || !req.query.i) {
+      return res.status(403).render("error/404");
+    } else if (!req.query || !req.query.e) {
+      return res.status(403).render("error/404");
+    }
+
+    const providerd = await Providers.findOne({
+      where: {
+        provider_code: s,
+      },
+    });
+
+    if (!providerd) {
+      return res.send("It seems you are not logged in.");
+    }
+
+    const currentTime = new Date();
+
+    const data = await LaunchData.findOne({
+      where: {
+        uuid: i,
+        token: t,
+      },
+    });
+
+    if (!data) {
+      return res.send("It seems you are not logged in.");
+    }
+
+    if (data && data.expiredAt < currentTime) {
+      LaunchData.destroy({
+        where: {
+          uuid: id,
+          token: token,
+        },
+      });
+      return res.send("It seems you are not logged in.");
+    }
+
+    setTimeout(() => {
+      data.destroy();
+    }, 20000);
+
+    if (data.content) {
+      res.setHeader("Content-Type", "text/html");
+      return res.send(data.content);
+    } else {
+      return res.redirect(data.url);
+    }
+  } catch (err) {
+    sendError(err, "API | parentRoundHistoryDetails",req.originalUrl);
+    return res.status(500).json({
+      code: 500,
+      message: "Internal Server Error",
+    });
+  }
+};
+
 // exports.copyHtml = async (req, res) => {
 //   try {
 //     const url = "http://localhost:5006/games";

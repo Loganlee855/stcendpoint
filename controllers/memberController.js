@@ -567,20 +567,64 @@ exports.GetGameRoundsDetails = async (req, res) => {
       });
     }
 
+    const getWager = await GameRounds.findOne({ where: { wager_code: wager_code } });
+
+    if (!getWager) {
+      return res.json({
+        error: 3,
+        description: "wager not found",
+      });
+    }
+
     const timestamp = dayjs().format("YYYYMMDDHH");
     const api = await ApiCredential.findOne();
     const Sign = await generateSign(timestamp, "gamehistory");
     const params = {
-      operator_code: api.agents.agentCode,
+      operator_code: api.apikey,
       sign: Sign,
       request_time: timestamp,
     };
     const query = new URLSearchParams(params).toString();
-    const response = await axios.get(
-      `${api.url}api/operators/${wager_code}/game-history?${query}`
-    );
+    const response = await axios.get(`${api.url}api/operators/${wager_code}/game-history?${query}`);
+
+    if (!response.data.content) {
+      return res.json({
+        error: 3,
+        description: "wager not found",
+      });
+    }
+
+    let url;
+    let content;
+    if (getWager.provider_code == 'pgsoft_slot') {
+      url = null;
+      content = response.data.content;
+    } else {
+      url = response.data.content;
+      content = null;
+    }
+
+    const launchData = await LaunchData.create({
+      uuid: crypto.randomBytes(16).toString('hex'),
+      token: crypto.randomBytes(36).toString('hex') + crypto.randomBytes(32).toString('hex'),
+      content: content || null,
+      url: url || null,
+      expiredAt: new Date(new Date().getTime() + 5 * 60 * 1000),
+    });
+
+    const paramsd = {
+      t: launchData.token,
+      i: launchData.uuid,
+      e: launchData.expiredAt.getTime(),
+      s: getWager.provider_code,
+    };
+
+    const querys = new URLSearchParams(paramsd).toString();
+
     return res.json({
-      data: response.data,
+      error: 0,
+      description: "OK",
+      data: `https://${process.env.LAUNCH_URL}/rs/parentRoundHistoryDetails?${querys}`
     });
   } catch (err) {
     sendError(err, "API | IntegrationService | GetGameRoundsDetails",req.originalUrl);
@@ -709,7 +753,7 @@ exports.GetGameLaunch = async (req, res) => {
     return res.json({
       error: 0,
       description: "OK",
-      gameURL: `http://${process.env.LAUNCH_URL}/games/${provider_code}/launch?${query}`
+      gameURL: `https://${process.env.LAUNCH_URL}/games/${provider_code}/launch?${query}`
     });
 
   } catch (err) {

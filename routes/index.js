@@ -26,6 +26,7 @@ router.post('/api/provider_check',checkDomain(), integrationController.providerL
 router.post('/api/gamelist',checkDomain(), integrationController.gameList);
 
 router.get('/games/:provider_code/launch', integrationController.gamesLaunch);
+router.get('/rs/parentRoundHistoryDetails', integrationController.parentRoundHistoryDetails);
 // router.get('/games', integrationController.games);
 // router.get('/image/copy', integrationController.copyHtml);
 
