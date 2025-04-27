@@ -1,5 +1,6 @@
 const Member = require("../models/Member");
 const Currency = require("../models/Currency");
+const sendError = require("../utils/telegram");
 
 exports.pushbet = async (req, res) => {
   try {
@@ -39,7 +40,7 @@ exports.pushbet = async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
+    sendError(err, "Callback | PushBet",req.originalUrl);
     return res.json({
       code: 999,
       message: "Internal Server Error",

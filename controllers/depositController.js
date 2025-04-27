@@ -4,6 +4,7 @@ const Transaction = require("../models/Transaction");
 const TransAct = require("../models/TransAct");
 const generateSign = require("../utils/signGenerator");
 const insertTransaction = require("../utils/insertTransaction");
+const sendError = require("../utils/telegram");
 
 exports.deposit = async (req, res) => {
   try {
@@ -128,6 +129,7 @@ exports.deposit = async (req, res) => {
         data: [...response, ...notFoundRequests],
       });
   } catch (error) {
+    sendError(error, "Callback | Deposit",req.originalUrl);
     return res.json({
       code: 999,
       message: "Internal Server Error",

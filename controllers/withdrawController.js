@@ -4,6 +4,7 @@ const Transaction = require("../models/Transaction");
 const TransAct = require("../models/TransAct");
 const generateSign = require("../utils/signGenerator");
 const insertTransaction = require("../utils/insertTransaction");
+const sendError = require("../utils/telegram");
 
 exports.Withdraw = async (req, res) => {
   try {
@@ -122,6 +123,7 @@ exports.Withdraw = async (req, res) => {
 
     res.json({ data: [...response.filter(Boolean), ...notFoundRequests] });
   } catch (error) {
+    sendError(error, "Callback | Withdraw",req.originalUrl);
     return res.json({
       code: 999,
       message: 'Internal Server Error',

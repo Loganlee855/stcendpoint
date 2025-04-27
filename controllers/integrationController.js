@@ -12,6 +12,7 @@ const transformGameData = require("../utils/codeGenerator");
 const transformGameType = require("../utils/pcodeGenerator");
 const fetch = require("node-fetch");
 const cheerio = require("cheerio");
+const sendError = require("../utils/telegram");
 
 exports.providerList = async (req, res) => {
   try {
@@ -69,7 +70,7 @@ exports.providerList = async (req, res) => {
       products,
     });
   } catch (err) {
-    console.error("Error:", err);
+    sendError(err, "API | Provider List",req.originalUrl);
     return res.status(500).json({
       code: 500,
       message: "Internal Server Error",
@@ -167,7 +168,7 @@ exports.gameList = async (req, res) => {
       games,
     });
   } catch (err) {
-    console.error("Error:", err);
+    sendError(err, "API | Games List",req.originalUrl);
     return res.status(500).json({
       code: 500,
       message: "Internal Server Error",
@@ -232,7 +233,7 @@ exports.gamesLaunch = async (req, res) => {
       return res.redirect(data.url);
     }
   } catch (err) {
-    console.error("Error:", err.message);
+    sendError(err, "API | gamesLaunch",req.originalUrl);
     return res.status(500).json({
       code: 500,
       message: "Internal Server Error",

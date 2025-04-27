@@ -15,6 +15,7 @@ const generateHash = require("../utils/hashGenerator");
 const crypto = require('crypto');
 const generateSign = require("../utils/signCreator");
 require('dotenv').config();
+const sendError = require("../utils/telegram");
 
 exports.create = async (req, res) => {
   try {
@@ -76,7 +77,7 @@ exports.create = async (req, res) => {
       playerId: players.aasUserCode,
     });
   } catch (err) {
-    console.error(err);
+    sendError(err, "API | IntegrationService | Create Account",req.originalUrl);
     return res.json({
       error: 1,
       description: "Internal error. Try later please",
@@ -129,7 +130,7 @@ exports.balance = async (req, res) => {
       balance: Number(users.balance),
     });
   } catch (err) {
-    console.error(err);
+    sendError(err, "API | IntegrationService | Get Balance",req.originalUrl);
     return res.json({
       error: 1,
       description: "Internal error. Try later please",
@@ -225,7 +226,7 @@ exports.transfer = async (req, res) => {
       balance: Number(users.balance),
     });
   } catch (err) {
-    console.error(err);
+    sendError(err, "API | IntegrationService | Transfer",req.originalUrl);
     return res.json({
       error: 1,
       description: "Internal error. Try later please",
@@ -322,7 +323,7 @@ exports.withdraw = async (req, res) => {
       balance: Number(users.balance),
     });
   } catch (err) {
-    console.error(err);
+    sendError(err, "API | IntegrationService | Withdraw",req.originalUrl);
     return res.json({
       error: 1,
       description: "Internal error. Try later please",
@@ -369,7 +370,7 @@ exports.casinoprovider = async (req, res) => {
       providers,
     });
   } catch (err) {
-    console.error(err);
+    sendError(err, "API | IntegrationService | Provider List",req.originalUrl);
     return res.json({
       error: 1,
       description: "Internal error. Try later please",
@@ -436,7 +437,7 @@ exports.casinogame = async (req, res) => {
       count: games.count,
     });
   } catch (err) {
-    console.error(err);
+    sendError(err, "API | IntegrationService | Games List",req.originalUrl);
     return res.json({
       error: 1,
       description: "Internal error. Try later please",
@@ -532,7 +533,7 @@ exports.GetGameRounds = async (req, res) => {
       count: history.count,
     });
   } catch (err) {
-    console.error(err);
+    sendError(err, "API | IntegrationService | GetGameRounds",req.originalUrl);
     return res.json({
       error: 1,
       description: "Internal error. Try later please",
@@ -582,7 +583,7 @@ exports.GetGameRoundsDetails = async (req, res) => {
       data: response.data,
     });
   } catch (err) {
-    console.error(err);
+    sendError(err, "API | IntegrationService | GetGameRoundsDetails",req.originalUrl);
     return res.json({
       error: 1,
       description: "Internal error. Try later please",
@@ -712,6 +713,7 @@ exports.GetGameLaunch = async (req, res) => {
     });
 
   } catch (err) {
+    sendError(err, "API | IntegrationService | Launch Game",req.originalUrl);
     return res.json({
       error: 1,
       description: "Internal error. Try later please",
