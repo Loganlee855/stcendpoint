@@ -757,7 +757,7 @@ exports.GetGameLaunch = async (req, res) => {
     });
 
   } catch (err) {
-    sendError(err, "API | IntegrationService | Launch Game",err);
+    sendError(err, "API | IntegrationService | Launch Game",req.originalUrl);
     return res.json({
       error: 1,
       description: "Internal error. Try later please",
