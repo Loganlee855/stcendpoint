@@ -25,10 +25,9 @@ exports.providerList = async (req, res) => {
       request_time: timestamp,
     };
     const query = new URLSearchParams(params).toString();
-    const response = await axios.get(
-      `${api.url}api/operators/available-products?${query}`
-    );
+    const response = await axios.get(`${api.url}api/operators/available-products?${query}`);
     const products = response.data;
+    let seq = 1;
     for (const item of products) {
       let status
       if (item.status === 'ACTIVATED') {
@@ -58,11 +57,13 @@ exports.providerList = async (req, res) => {
           product_code: item.product_code,
           game_type: item.game_type,
           game_type_c: gtypec,
+          sequence: seq,
           status: status,
           createdAt: new Date(),
           updatedAt: new Date(),
         });
       }
+      seq++;
     }
 
     return res.json({
@@ -108,15 +109,15 @@ exports.gameList = async (req, res) => {
     const query = new URLSearchParams(params).toString();
     const response = await axios.get(`${api.url}api/operators/provider-games?${query}`);
     const products = response.data.provider_games;
+    let seq = 1;
     for (const item of products) {
-
       let status
       if (item.status === 'ACTIVATED') {
         status = 1;
       } else {
         status = 0;
       }
-
+      
       const checks = await Providers.findOne({
         where: {
           product_code: item.product_code,
@@ -149,12 +150,14 @@ exports.gameList = async (req, res) => {
             product_code: item.product_code,
             support_currency: item.support_currency,
             game_type: item.game_type,
+            sequence: seq,
             status: status,
             createdAt: new Date(),
             updatedAt: new Date(),
           });
         }
       }
+      seq++;
     }
 
     const games = await GameList.findAll({

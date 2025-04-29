@@ -38,6 +38,11 @@ const GameList = sequelize.define('GameList', {
         type: DataTypes.STRING,
         allowNull: false,
     },
+    sequence: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+    },
     status: {
         type: DataTypes.INTEGER,
         allowNull: false,

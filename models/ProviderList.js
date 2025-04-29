@@ -30,6 +30,11 @@ const ProviderList = sequelize.define('ProviderList', {
         type: DataTypes.STRING,
         allowNull: false,
     },
+    sequence: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+    },
     game_type_c: {
         type: DataTypes.INTEGER,
         allowNull: false,
