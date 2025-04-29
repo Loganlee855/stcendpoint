@@ -37,4 +37,9 @@ Please check boss....`;
   }
 }
 
-module.exports = sendError;
+async function getCurrency(supportCurrency) {
+  const currencies = supportCurrency.split(',');
+  return currencies.includes('IDR') ? 'IDR' : currencies.includes('IDR2') ? 'IDR2' : null;
+}
+
+module.exports = { sendError, getCurrency };

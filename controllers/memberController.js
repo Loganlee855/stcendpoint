@@ -15,7 +15,7 @@ const generateHash = require("../utils/hashGenerator");
 const crypto = require('crypto');
 const generateSign = require("../utils/signCreator");
 require('dotenv').config();
-const sendError = require("../utils/telegram");
+const { sendError , getCurrency } = require("../utils/telegram");
 
 exports.create = async (req, res) => {
   try {
@@ -709,12 +709,13 @@ exports.GetGameLaunch = async (req, res) => {
     const timestamp = dayjs().format("YYYYMMDDHH");
     const api = await ApiCredential.findOne();
     const Sign = await generateSign(timestamp, "launchgame");
+    const currency = await getCurrency(games.support_currency);
     const postData = {
       operator_code: api.apikey,
       member_account: users.aasUserCode,
       password: users.userCode,
       nickname: users.userCode,
-      currency: games.support_currency.split(',')[0],
+      currency: currency,
       game_code: games.game_code || null,
       product_code: games.product_code,
       game_type: games.game_type,
