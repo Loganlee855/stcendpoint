@@ -647,7 +647,7 @@ exports.GetGameLaunch = async (req, res) => {
     }
 
     let sechash;
-    if (game_code == '') {
+    if (!game_code) {
       sechash = {
         secureLogin: secureLogin,
         externalPlayerId: externalPlayerId,
