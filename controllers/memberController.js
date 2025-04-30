@@ -646,16 +646,29 @@ exports.GetGameLaunch = async (req, res) => {
       });
     }
 
-    const sechash = {
-      secureLogin: secureLogin,
-      externalPlayerId: externalPlayerId,
-      provider_code: provider_code,
-      game_code: game_code || null,
-      platform: platform || null,
-      language: language,
-      lobbyURL: lobbyURL,
-      secretKey: agents.secretkey,
-    };
+    let sechash;
+    if (game_code == '') {
+      sechash = {
+        secureLogin: secureLogin,
+        externalPlayerId: externalPlayerId,
+        provider_code: provider_code,
+        platform: platform || null,
+        language: language,
+        lobbyURL: lobbyURL,
+        secretKey: agents.secretkey,
+      };
+    } else {
+      sechash = {
+        secureLogin: secureLogin,
+        externalPlayerId: externalPlayerId,
+        provider_code: provider_code,
+        game_code: game_code || null,
+        platform: platform || null,
+        language: language,
+        lobbyURL: lobbyURL,
+        secretKey: agents.secretkey,
+      };
+    }
 
     const hashParams = await generateHash(new URLSearchParams(sechash).toString());
 
