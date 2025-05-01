@@ -9,6 +9,7 @@ router.post('/api/balance/current',validate(memberSchema.create), memberControll
 router.post('/api/balance/transfer',validate(memberSchema.transfer), memberController.transfer);
 router.post('/api/balance/withdraw',validate(memberSchema.transfer), memberController.withdraw);
 
+router.post('/api/agent/balance/current',validate(memberSchema.casinoprovider), memberController.balance_agent);
 
 router.post('/api/games/getCasinoProvider',validate(memberSchema.casinoprovider), memberController.casinoprovider);
 router.post('/api/games/getCasinoGames',validate(memberSchema.casinogame), memberController.casinogame);

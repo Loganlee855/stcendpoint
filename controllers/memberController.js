@@ -778,3 +778,42 @@ exports.GetGameLaunch = async (req, res) => {
     });
   }
 };
+
+
+exports.balance_agent = async (req, res) => {
+  try {
+    const { secureLogin, hash } = req.body;
+    const agents = await Agent.findOne({ where: { secureLogin: secureLogin } });
+    if (!agents) {
+      return res.json({
+        error: 2,
+        description: "Authentication failed. Incorrect secure login and secure password combination.",
+      });
+    }
+
+    const sechash = {
+      secureLogin: secureLogin,
+      secretKey: agents.secretkey,
+    };
+    const hashParams = await generateHash(new URLSearchParams(sechash).toString());
+
+    if (hash != hashParams) {
+      return res.json({
+        error: 2,
+        description: "Authentication failed. Incorrect secure login and secure password combination.",
+      });
+    }
+
+    return res.json({
+      code: 0,
+      description: "OK",
+      balance: Number(agents.balance),
+    });
+  } catch (err) {
+    sendError(err, "API | IntegrationService | Get Agent Balance",req.originalUrl);
+    return res.json({
+      error: 1,
+      description: "Internal error. Try later please",
+    });
+  }
+};
