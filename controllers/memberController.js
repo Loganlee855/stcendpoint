@@ -125,7 +125,7 @@ exports.balance = async (req, res) => {
     }
 
     return res.json({
-      code: 0,
+      error: 0,
       description: "OK",
       balance: Number(users.balance),
     });
@@ -174,7 +174,7 @@ exports.transfer = async (req, res) => {
 
     if (!users) {
       return res.json({
-        status: 17,
+        error: 17,
         description: "Player not found",
       });
     }
@@ -270,7 +270,7 @@ exports.withdraw = async (req, res) => {
 
     if (!users) {
       return res.json({
-        status: 17,
+        error: 17,
         description: "Player not found",
       });
     }
@@ -805,12 +805,12 @@ exports.balance_agent = async (req, res) => {
     }
 
     return res.json({
-      code: 0,
+      error: 0,
       description: "OK",
       balance: Number(agents.balance),
     });
   } catch (err) {
-    sendError(err, "API | IntegrationService | Get Agent Balance",req.originalUrl);
+    sendError(err, "API | IntegrationService | Get Agent Balance",'Provider List');
     return res.json({
       error: 1,
       description: "Internal error. Try later please",

@@ -12,7 +12,7 @@ const transformGameData = require("../utils/codeGenerator");
 const transformGameType = require("../utils/pcodeGenerator");
 const fetch = require("node-fetch");
 const cheerio = require("cheerio");
-const sendError = require("../utils/telegram");
+const { sendError } = require("../utils/telegram");
 
 exports.providerList = async (req, res) => {
   try {

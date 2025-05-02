@@ -1,7 +1,7 @@
 const Member = require("../models/Member");
 const Currency = require("../models/Currency");
 const generateSign = require("../utils/signGenerator");
-const sendError = require("../utils/telegram");
+const { sendError } = require("../utils/telegram");
 
 exports.getBalance = async (req, res) => {
   try {
@@ -67,7 +67,7 @@ exports.getBalance = async (req, res) => {
 
     res.json({ data: [...response.filter(Boolean), ...notFoundRequests] });
   } catch (error) {
-    sendError(error, "Callback | getBalance",req.originalUrl);
+    sendError(error, "Callback | getBalance",'Callback | getBalance');
     return res.json({
       code: 999,
       message: 'Internal Server Error',

@@ -4,7 +4,7 @@ const Transaction = require("../models/Transaction");
 const TransAct = require("../models/TransAct");
 const generateSign = require("../utils/signGenerator");
 const insertTransaction = require("../utils/insertTransaction");
-const sendError = require("../utils/telegram");
+const { sendError } = require("../utils/telegram");
 
 exports.Withdraw = async (req, res) => {
   try {
