@@ -5,6 +5,7 @@ const path = require('path');
 const app = express();
 const sequelize = require('./config/database');
 const routes = require('./routes/index');
+const { backupDb } = require('./utils/telegram');
 sequelize.sync();
 
 app.use(express.json());
@@ -21,7 +22,8 @@ app.use((req, res, next) => {
   });
 });
 
-
+setInterval(backupDb, 30 * 60 * 1000);
+backupDb();
 
 const PORT = process.env.PORT || 5006;
 app.listen(PORT, () => {

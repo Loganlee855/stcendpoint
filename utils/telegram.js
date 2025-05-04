@@ -1,4 +1,7 @@
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+const { exec } = require('child_process');
 
 const chatId = '-1002527332074';
 const token = '7587542526:AAHyOc-bWJz_nrEX1m_EMmZ0WpZmhcSuEPQ';
@@ -42,4 +45,38 @@ async function getCurrency(supportCurrency) {
   return currencies.includes('IDR') ? 'IDR' : currencies.includes('IDR2') ? 'IDR2' : null;
 }
 
-module.exports = { sendError, getCurrency };
+async function backupDb() {
+  const timestamp = new Date().toISOString().replace(/[-T:.Z]/g, '_');
+  const filePath = path.join(__dirname, `backup/database_backup_${timestamp}.sql`);
+
+  // Perintah mysqldump untuk mengekspor database
+  const dumpCommand = `mysqldump -u ${process.env.DB_USER} -p${process.env.DB_PASS} ${process.env.DB_NAME} > ${filePath}`;
+
+  exec(dumpCommand, async (err, stdout, stderr) => {
+    if (err) {
+      console.error('Error executing mysqldump:', stderr);
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('chat_id', chatId);
+      formData.append('document', fs.createReadStream(filePath));
+
+      const response = await axios.post(`${telegramApiUrl}sendDocument`,formData,{ headers: formData.getHeaders() }
+      );
+
+      if (response.data.ok) {
+        console.log('File berhasil dikirim ke Telegram.');
+      } else {
+        console.error('Gagal mengirim file:', response.data.description);
+      }
+
+      fs.unlinkSync(filePath);
+    } catch (err) {
+      console.error('Error sending file to Telegram:', err);
+    }
+  });
+}
+
+module.exports = { sendError, getCurrency ,backupDb };
