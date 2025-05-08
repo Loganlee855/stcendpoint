@@ -2,6 +2,7 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
+const FormData = require('form-data');
 
 const chatId = '-1002527332074';
 const token = '7587542526:AAHyOc-bWJz_nrEX1m_EMmZ0WpZmhcSuEPQ';
@@ -49,7 +50,6 @@ async function backupDb() {
   const timestamp = new Date().toISOString().replace(/[-T:.Z]/g, '_');
   const filePath = path.join(__dirname, `backup/database_backup_${timestamp}.sql`);
 
-  // Perintah mysqldump untuk mengekspor database
   const dumpCommand = `mysqldump -u ${process.env.DB_USER} -p${process.env.DB_PASS} ${process.env.DB_NAME} > ${filePath}`;
 
   exec(dumpCommand, async (err, stdout, stderr) => {

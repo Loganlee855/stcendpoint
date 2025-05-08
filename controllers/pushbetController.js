@@ -4,7 +4,7 @@ const { sendError } = require("../utils/telegram");
 
 exports.pushbet = async (req, res) => {
   try {
-    const transactions = req.body.transactions?.[0];
+    const transactions = req.body.wagers?.[0];
     if (!transactions) {
       return res.json({
         code: 999,
