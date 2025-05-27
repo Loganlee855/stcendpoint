@@ -498,6 +498,7 @@ exports.GetGameRounds = async (req, res) => {
         "userCode",
         "provider_code",
         "game_code",
+        "game_name",
         "game_type",
         "amount",
         "bet_amount",
