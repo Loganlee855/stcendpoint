@@ -24,12 +24,6 @@ const Member = sequelize.define('Member', {
         defaultValue: 0,
         comment: "slot balance",
     },
-    balance_slot: {
-        type: DataTypes.DOUBLE,
-        allowNull: false,
-        defaultValue: 0,
-        comment: "slot balance",
-    },
     aasUserCode: {
         type: DataTypes.STRING,
         allowNull: false,
