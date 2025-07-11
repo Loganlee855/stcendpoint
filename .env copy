@@ -1,0 +1,8 @@
+PORT=5006
+
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=endpointbos
+DB_USER=nodeuser
+DB_PASS=4f3123f4f3e8ac32af0370649c05bdf5e936e4003d179bea
+LAUNCH_URL=launch.biostarship.site

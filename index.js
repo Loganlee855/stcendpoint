@@ -22,8 +22,8 @@ app.use((req, res, next) => {
   });
 });
 
-setInterval(backupDb, 30 * 60 * 1000);
-backupDb();
+// setInterval(backupDb, 30 * 60 * 1000);
+// backupDb();
 
 const PORT = process.env.PORT || 5006;
 app.listen(PORT, () => {

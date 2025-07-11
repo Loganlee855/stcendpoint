@@ -1,27 +1,24 @@
 
-async function normalized(gameName, gameType) {
-  const normalizedGameName = gameName.toLowerCase().replace(/\s+/g, "");
-
+async function normalized(gameType) {
   const gameTypeMapping = {
-    SLOT: "_slot",
-    LIVE_CASINO: "_casino",
-    LIVE_CASINO_PREMIUM: "_casinoplus",
-    VIRTUAL_SPORT: "_virtual",
-    SPORT_BOOK: "_sport",
-    COCK_FIGHTING: "_cockfighting",
-    LOTTERY: "_lottery",
-    QIPAI: "_qipai",
-    POKER: "_poker",
-    ESPORT: "_esport",
-    BONUS: "_bonus",
-    FISHING: "_fishing",
-    P2P: "_p2p",
-    OTHER: "_ot",
+    SLOT: "SL",
+    LIVE_CASINO: "LC",
+    LIVE_CASINO_PREMIUM: "LC",
+    VIRTUAL_SPORT: "ES",
+    SPORT_BOOK: "SB",
+    COCK_FIGHTING: "OT",
+    LOTTERY: "LK",
+    QIPAI: "OT",
+    POKER: "PK",
+    ESPORT: "ES",
+    BONUS: "OT",
+    FISHING: "FH",
+    OTHER: "OT",
   };
 
   const mappedType = gameTypeMapping[gameType] || "";
 
-  const result = normalizedGameName + mappedType;
+  const result = mappedType;
 
   return result;
 }

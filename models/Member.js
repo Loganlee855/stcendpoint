@@ -54,6 +54,12 @@ const Member = sequelize.define('Member', {
         defaultValue: 0,
         comment: "total win money",
     },
+    lastPlay: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "not",
+        comment: "lastPlay",
+    },
 },
 {
     tableName: "users",

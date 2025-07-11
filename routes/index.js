@@ -19,11 +19,11 @@ function checkDomain() {
   };
 }
 
-router.use("/v1/api/seamless",checkDomain(), callbackRouter);
-router.use("/IntegrationService/http",checkDomain(), IntegrationService);
+router.use("/v1/api/seamless", callbackRouter);
+router.use("/IntegrationService/http", IntegrationService);
   
-router.post('/api/provider_check',checkDomain(), integrationController.providerList);
-router.post('/api/gamelist',checkDomain(), integrationController.gameList);
+router.post('/api/provider_check', integrationController.providerList);
+router.post('/api/gamelist', integrationController.gameList);
 
 router.get('/games/:provider_code/launch', integrationController.gamesLaunch);
 router.get('/rs/parentRoundHistoryDetails', integrationController.parentRoundHistoryDetails);

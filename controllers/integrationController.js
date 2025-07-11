@@ -35,7 +35,7 @@ exports.providerList = async (req, res) => {
       } else {
         status = 0;
       }
-      const prcode = await transformGameData(item.product_title, item.game_type);
+      const prcode = await transformGameData(item.game_type);
       const gtypec = await transformGameType(item.game_type);
       const existing = await Providers.findOne({
         where: {

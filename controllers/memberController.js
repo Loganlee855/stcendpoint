@@ -10,12 +10,21 @@ const { Op } = require("sequelize");
 const ApiCredential = require("../models/ApiCredential");
 const LaunchData = require("../models/LaunchGame");
 const axios = require("axios");
+const transformGameData = require("../utils/codeGenerator");
 const dayjs = require("dayjs");
 const generateHash = require("../utils/hashGenerator");
-const crypto = require('crypto');
+const {
+  createMemberGs,
+  getBalanceGs,
+  depositGs,
+  withdrawGs,
+  launchGamesGs,
+  filterTeXtusER,
+} = require("../utils/gamingsoftModule");
+const crypto = require("crypto");
 const generateSign = require("../utils/signCreator");
-require('dotenv').config();
-const { sendError , getCurrency } = require("../utils/telegram");
+require("dotenv").config();
+const { sendError, getCurrency } = require("../utils/telegram");
 
 exports.create = async (req, res) => {
   try {
@@ -24,7 +33,15 @@ exports.create = async (req, res) => {
     if (!agents) {
       return res.json({
         error: 2,
-        description: "Authentication failed. Incorrect secure login and secure password combination.",
+        description:
+          "Authentication failed. Incorrect secure login and secure password combination.",
+      });
+    }
+
+    if (agents.status != 1) {
+      return res.json({
+        error: 10000,
+        description: "Agent Blocked.",
       });
     }
 
@@ -33,12 +50,15 @@ exports.create = async (req, res) => {
       externalPlayerId: externalPlayerId,
       secretKey: agents.secretkey,
     };
-    const hashParams = await generateHash(new URLSearchParams(sechash).toString());
+    const hashParams = await generateHash(
+      new URLSearchParams(sechash).toString()
+    );
 
     if (hash != hashParams) {
       return res.json({
         error: 2,
-        description: "Authentication failed. Incorrect secure login and secure password combination.",
+        description:
+          "Authentication failed. Incorrect secure login and secure password combination.",
       });
     }
 
@@ -49,7 +69,8 @@ exports.create = async (req, res) => {
       },
     });
 
-    const userCount = (await Member.count({ where: { agentCode: agents.agentCode } })) + 1;
+    const userCount =
+      (await Member.count({ where: { agentCode: agents.agentCode } })) + 1;
 
     if (existing) {
       return res.json({
@@ -59,7 +80,21 @@ exports.create = async (req, res) => {
     }
 
     const parentPath = agents.parentPath;
-    const userCodes = agents.secureLogin + "PL" + userCount.toString().padStart(6, "0");
+    const userCodes =
+      filterTeXtusER(agents.secureLogin) +
+      userCount.toString().padStart(3, "0") +
+      filterTeXtusER(externalPlayerId);
+
+    const createMemberGsResponse = await createMemberGs(
+      userCodes.toLowerCase()
+    );
+    if (createMemberGsResponse.errCode && createMemberGsResponse.errCode != 0) {
+      return res.json({
+        error: createMemberGsResponse.errCode,
+        description:
+          createMemberGsResponse.errMsg || "Failed to create member in Api",
+      });
+    }
 
     const players = await Member.create({
       uuid: uuidv4(),
@@ -77,7 +112,12 @@ exports.create = async (req, res) => {
       playerId: players.aasUserCode,
     });
   } catch (err) {
-    sendError(err, "API | IntegrationService | Create Account",req.originalUrl);
+    console.error("Error sending message:", err);
+    sendError(
+      err,
+      "API | IntegrationService | Create Account",
+      req.originalUrl
+    );
     return res.json({
       error: 1,
       description: "Internal error. Try later please",
@@ -92,7 +132,15 @@ exports.balance = async (req, res) => {
     if (!agents) {
       return res.json({
         error: 2,
-        description: "Authentication failed. Incorrect secure login and secure password combination.",
+        description:
+          "Authentication failed. Incorrect secure login and secure password combination.",
+      });
+    }
+
+    if (agents.status != 1) {
+      return res.json({
+        error: 10000,
+        description: "Agent Blocked.",
       });
     }
 
@@ -101,12 +149,15 @@ exports.balance = async (req, res) => {
       externalPlayerId: externalPlayerId,
       secretKey: agents.secretkey,
     };
-    const hashParams = await generateHash(new URLSearchParams(sechash).toString());
+    const hashParams = await generateHash(
+      new URLSearchParams(sechash).toString()
+    );
 
     if (hash != hashParams) {
       return res.json({
         error: 2,
-        description: "Authentication failed. Incorrect secure login and secure password combination.",
+        description:
+          "Authentication failed. Incorrect secure login and secure password combination.",
       });
     }
 
@@ -124,13 +175,31 @@ exports.balance = async (req, res) => {
       });
     }
 
+    if (users.lastPlay !== "not") {
+      const balanceResponse = await getBalanceGs(
+        users.aasUserCode,
+        users.lastPlay
+      );
+      if (balanceResponse.errCode && balanceResponse.errCode != 0) {
+        return res.json({
+          error: balanceResponse.errCode,
+          description:
+            balanceResponse.errMsg || "Failed to get balance from Api",
+        });
+      } else {
+        users.balance = Number(balanceResponse.balance);
+        await users.save();
+      }
+    }
+
     return res.json({
       error: 0,
       description: "OK",
       balance: Number(users.balance),
     });
   } catch (err) {
-    sendError(err, "API | IntegrationService | Get Balance",req.originalUrl);
+    console.error("Error in getBalance:", err);
+    sendError(err, "API | IntegrationService | Get Balance", req.originalUrl);
     return res.json({
       error: 1,
       description: "Internal error. Try later please",
@@ -145,7 +214,15 @@ exports.transfer = async (req, res) => {
     if (!agents) {
       return res.json({
         error: 2,
-        description: "Authentication failed. Incorrect secure login and secure password combination.",
+        description:
+          "Authentication failed. Incorrect secure login and secure password combination.",
+      });
+    }
+
+    if (agents.status != 1) {
+      return res.json({
+        error: 10000,
+        description: "Agent Blocked.",
       });
     }
 
@@ -156,12 +233,15 @@ exports.transfer = async (req, res) => {
       secretKey: agents.secretkey,
     };
 
-    const hashParams = await generateHash(new URLSearchParams(sechash).toString());
+    const hashParams = await generateHash(
+      new URLSearchParams(sechash).toString()
+    );
 
     if (hash != hashParams) {
       return res.json({
         error: 2,
-        description: "Authentication failed. Incorrect secure login and secure password combination.",
+        description:
+          "Authentication failed. Incorrect secure login and secure password combination.",
       });
     }
 
@@ -179,22 +259,34 @@ exports.transfer = async (req, res) => {
       });
     }
 
-    const transactionCount = (await userTransaction.count({ where: { agentCode: agents.agentCode, userCode: users.userCode,}, })) + 1;
-    const transCode = "TRF" + agents.agentCode + externalPlayerId + transactionCount.toString().padStart(6, "0");
+    const transactionCount =
+      (await userTransaction.count({
+        where: { agentCode: agents.agentCode, userCode: users.userCode },
+      })) + 1;
+    const transCode =
+      "TRF" +
+      agents.agentCode +
+      externalPlayerId +
+      transactionCount.toString().padStart(6, "0");
 
     const agentBeforeBalance = Number(agents.balance);
     const agentAfterBalance = agentBeforeBalance - Number(amount);
+
+    if (agentBeforeBalance < Number(amount)) {
+      return res.json({
+        error: 25,
+        description:
+          "Insufficient Agent funds available to completethe transaction.",
+      });
+    }
 
     const userBeforeBalance = Number(users.balance);
     const userAfterBalance = userBeforeBalance + Number(amount);
     await agents.update({ balance: agentAfterBalance });
     await users.update({ balance: userAfterBalance });
 
-    if (agentBeforeBalance < Number(amount)) {
-      return res.json({
-        error: 25,
-        description: "Insufficient Agent funds available to completethe transaction.",
-      });
+    if (users.lastPlay !== "not") {
+      await depositGs(users.aasUserCode, users.lastPlay, amount);
     }
 
     UserBalanceProgress.create({
@@ -226,7 +318,8 @@ exports.transfer = async (req, res) => {
       balance: Number(users.balance),
     });
   } catch (err) {
-    sendError(err, "API | IntegrationService | Transfer",req.originalUrl);
+    console.error("Error in transfer:", err);
+    sendError(err, "API | IntegrationService | Transfer", req.originalUrl);
     return res.json({
       error: 1,
       description: "Internal error. Try later please",
@@ -241,7 +334,15 @@ exports.withdraw = async (req, res) => {
     if (!agents) {
       return res.json({
         error: 2,
-        description: "Authentication failed. Incorrect secure login and secure password combination.",
+        description:
+          "Authentication failed. Incorrect secure login and secure password combination.",
+      });
+    }
+
+    if (agents.status != 1) {
+      return res.json({
+        error: 10000,
+        description: "Agent Blocked.",
       });
     }
 
@@ -252,12 +353,15 @@ exports.withdraw = async (req, res) => {
       secretKey: agents.secretkey,
     };
 
-    const hashParams = await generateHash(new URLSearchParams(sechash).toString());
+    const hashParams = await generateHash(
+      new URLSearchParams(sechash).toString()
+    );
 
     if (hash != hashParams) {
       return res.json({
         error: 2,
-        description: "Authentication failed. Incorrect secure login and secure password combination.",
+        description:
+          "Authentication failed. Incorrect secure login and secure password combination.",
       });
     }
 
@@ -275,8 +379,43 @@ exports.withdraw = async (req, res) => {
       });
     }
 
-    const transactionCount = (await userTransaction.count({ where: { agentCode: agents.agentCode, userCode: users.userCode,},})) + 1;
-    const transCode = "WDH" + agents.agentCode + externalPlayerId + transactionCount.toString().padStart(4, "0");
+    if (users.lastPlay !== "not") {
+      const balanceResponse = await getBalanceGs(
+        users.aasUserCode,
+        users.lastPlay
+      );
+      if (balanceResponse.errCode && balanceResponse.errCode != 0) {
+        return res.json({
+          error: balanceResponse.errCode,
+          description:
+            balanceResponse.errMsg || "Failed to get balance from Api",
+        });
+      } else {
+        if (balanceResponse.balance > 0) {
+          const gsresponse = await withdrawGs(
+            users.aasUserCode,
+            users.lastPlay,
+            amount
+          );
+          if (gsresponse.errCode && gsresponse.errCode != 0) {
+            return res.json({
+              error: gsresponse.errCode,
+              description: gsresponse.errMsg || "Failed to withdraw from Api",
+            });
+          }
+        }
+      }
+    }
+
+    const transactionCount =
+      (await userTransaction.count({
+        where: { agentCode: agents.agentCode, userCode: users.userCode },
+      })) + 1;
+    const transCode =
+      "WDH" +
+      agents.agentCode +
+      externalPlayerId +
+      transactionCount.toString().padStart(4, "0");
 
     const agentBeforeBalance = Number(agents.balance);
     const agentAfterBalance = agentBeforeBalance + Number(amount);
@@ -323,7 +462,7 @@ exports.withdraw = async (req, res) => {
       balance: Number(users.balance),
     });
   } catch (err) {
-    sendError(err, "API | IntegrationService | Withdraw",req.originalUrl);
+    sendError(err, "API | IntegrationService | Withdraw", req.originalUrl);
     return res.json({
       error: 1,
       description: "Internal error. Try later please",
@@ -338,7 +477,15 @@ exports.casinoprovider = async (req, res) => {
     if (!agents) {
       return res.json({
         error: 2,
-        description: "Authentication failed. Incorrect secure login and secure password combination.",
+        description:
+          "Authentication failed. Incorrect secure login and secure password combination.",
+      });
+    }
+
+    if (agents.status != 1) {
+      return res.json({
+        error: 10000,
+        description: "Agent Blocked.",
       });
     }
 
@@ -347,12 +494,15 @@ exports.casinoprovider = async (req, res) => {
       secretKey: agents.secretkey,
     };
 
-    const hashParams = await generateHash(new URLSearchParams(sechash).toString());
+    const hashParams = await generateHash(
+      new URLSearchParams(sechash).toString()
+    );
 
     if (hash != hashParams) {
       return res.json({
         error: 2,
-        description: "Authentication failed. Incorrect secure login and secure password combination.",
+        description:
+          "Authentication failed. Incorrect secure login and secure password combination.",
       });
     }
 
@@ -370,7 +520,7 @@ exports.casinoprovider = async (req, res) => {
       providers,
     });
   } catch (err) {
-    sendError(err, "API | IntegrationService | Provider List",req.originalUrl);
+    sendError(err, "API | IntegrationService | Provider List", req.originalUrl);
     return res.json({
       error: 1,
       description: "Internal error. Try later please",
@@ -385,7 +535,15 @@ exports.casinogame = async (req, res) => {
     if (!agents) {
       return res.json({
         error: 2,
-        description: "Authentication failed. Incorrect secure login and secure password combination.",
+        description:
+          "Authentication failed. Incorrect secure login and secure password combination.",
+      });
+    }
+
+    if (agents.status != 1) {
+      return res.json({
+        error: 10000,
+        description: "Agent Blocked.",
       });
     }
 
@@ -395,12 +553,15 @@ exports.casinogame = async (req, res) => {
       secretKey: agents.secretkey,
     };
 
-    const hashParams = await generateHash(new URLSearchParams(sechash).toString());
+    const hashParams = await generateHash(
+      new URLSearchParams(sechash).toString()
+    );
 
     if (hash != hashParams) {
       return res.json({
         error: 2,
-        description: "Authentication failed. Incorrect secure login and secure password combination.",
+        description:
+          "Authentication failed. Incorrect secure login and secure password combination.",
       });
     }
 
@@ -437,7 +598,7 @@ exports.casinogame = async (req, res) => {
       count: games.count,
     });
   } catch (err) {
-    sendError(err, "API | IntegrationService | Games List",req.originalUrl);
+    sendError(err, "API | IntegrationService | Games List", req.originalUrl);
     return res.json({
       error: 1,
       description: "Internal error. Try later please",
@@ -452,7 +613,15 @@ exports.GetGameRounds = async (req, res) => {
     if (!agents) {
       return res.json({
         error: 2,
-        description: "Authentication failed. Incorrect secure login and secure password combination.",
+        description:
+          "Authentication failed. Incorrect secure login and secure password combination.",
+      });
+    }
+
+    if (agents.status != 1) {
+      return res.json({
+        error: 10000,
+        description: "Agent Blocked.",
       });
     }
 
@@ -463,12 +632,15 @@ exports.GetGameRounds = async (req, res) => {
       secretKey: agents.secretkey,
     };
 
-    const hashParams = await generateHash(new URLSearchParams(sechash).toString());
+    const hashParams = await generateHash(
+      new URLSearchParams(sechash).toString()
+    );
 
     if (hash != hashParams) {
       return res.json({
         error: 2,
-        description: "Authentication failed. Incorrect secure login and secure password combination.",
+        description:
+          "Authentication failed. Incorrect secure login and secure password combination.",
       });
     }
 
@@ -534,7 +706,7 @@ exports.GetGameRounds = async (req, res) => {
       count: history.count,
     });
   } catch (err) {
-    sendError(err, "API | IntegrationService | GetGameRounds",req.originalUrl);
+    sendError(err, "API | IntegrationService | GetGameRounds", req.originalUrl);
     return res.json({
       error: 1,
       description: "Internal error. Try later please",
@@ -550,7 +722,15 @@ exports.GetGameRoundsDetails = async (req, res) => {
     if (!agents) {
       return res.json({
         error: 2,
-        description: "Authentication failed. Incorrect secure login and secure password combination.",
+        description:
+          "Authentication failed. Incorrect secure login and secure password combination.",
+      });
+    }
+
+    if (agents.status != 1) {
+      return res.json({
+        error: 10000,
+        description: "Agent Blocked.",
       });
     }
 
@@ -559,16 +739,21 @@ exports.GetGameRoundsDetails = async (req, res) => {
       secretKey: agents.secretkey,
     };
 
-    const hashParams = await generateHash(new URLSearchParams(sechash).toString());
+    const hashParams = await generateHash(
+      new URLSearchParams(sechash).toString()
+    );
 
     if (hash != hashParams) {
       return res.json({
         error: 2,
-        description: "Authentication failed. Incorrect secure login and secure password combination.",
+        description:
+          "Authentication failed. Incorrect secure login and secure password combination.",
       });
     }
 
-    const getWager = await GameRounds.findOne({ where: { wager_code: wager_code } });
+    const getWager = await GameRounds.findOne({
+      where: { wager_code: wager_code },
+    });
 
     if (!getWager) {
       return res.json({
@@ -586,7 +771,9 @@ exports.GetGameRoundsDetails = async (req, res) => {
       request_time: timestamp,
     };
     const query = new URLSearchParams(params).toString();
-    const response = await axios.get(`${api.url}api/operators/${wager_code}/game-history?${query}`);
+    const response = await axios.get(
+      `${api.url}api/operators/${wager_code}/game-history?${query}`
+    );
 
     if (!response.data.content) {
       return res.json({
@@ -597,7 +784,7 @@ exports.GetGameRoundsDetails = async (req, res) => {
 
     let url;
     let content;
-    if (getWager.provider_code == 'pgsoft_slot') {
+    if (getWager.provider_code == "pgsoft_slot") {
       url = null;
       content = response.data.content;
     } else {
@@ -606,8 +793,10 @@ exports.GetGameRoundsDetails = async (req, res) => {
     }
 
     const launchData = await LaunchData.create({
-      uuid: crypto.randomBytes(16).toString('hex'),
-      token: crypto.randomBytes(36).toString('hex') + crypto.randomBytes(32).toString('hex'),
+      uuid: crypto.randomBytes(16).toString("hex"),
+      token:
+        crypto.randomBytes(36).toString("hex") +
+        crypto.randomBytes(32).toString("hex"),
       content: content || null,
       url: url || null,
       expiredAt: new Date(new Date().getTime() + 5 * 60 * 1000),
@@ -621,14 +810,18 @@ exports.GetGameRoundsDetails = async (req, res) => {
     };
 
     const querys = new URLSearchParams(paramsd).toString();
-
+    const domain = req.get("Host");
     return res.json({
       error: 0,
       description: "OK",
-      data: `https://${process.env.LAUNCH_URL}/rs/parentRoundHistoryDetails?${querys}`
+      data: `https://${domain}/rs/parentRoundHistoryDetails?${querys}`,
     });
   } catch (err) {
-    sendError(err, "API | IntegrationService | GetGameRoundsDetails",req.originalUrl);
+    sendError(
+      err,
+      "API | IntegrationService | GetGameRoundsDetails",
+      req.originalUrl
+    );
     return res.json({
       error: 1,
       description: "Internal error. Try later please",
@@ -638,12 +831,29 @@ exports.GetGameRoundsDetails = async (req, res) => {
 
 exports.GetGameLaunch = async (req, res) => {
   try {
-    const { secureLogin, hash, externalPlayerId, provider_code, game_code, platform, language, lobbyURL} = req.body;
+    const {
+      secureLogin,
+      hash,
+      externalPlayerId,
+      provider_code,
+      game_code,
+      platform,
+      language,
+      lobbyURL,
+    } = req.body;
     const agents = await Agent.findOne({ where: { secureLogin: secureLogin } });
     if (!agents) {
       return res.json({
         error: 2,
-        description: "Authentication failed. Incorrect secure login and secure password combination.",
+        description:
+          "Authentication failed. Incorrect secure login and secure password combination.",
+      });
+    }
+
+    if (agents.status != 1) {
+      return res.json({
+        error: 10000,
+        description: "Agent Blocked.",
       });
     }
 
@@ -671,12 +881,15 @@ exports.GetGameLaunch = async (req, res) => {
       };
     }
 
-    const hashParams = await generateHash(new URLSearchParams(sechash).toString());
+    const hashParams = await generateHash(
+      new URLSearchParams(sechash).toString()
+    );
 
     if (hash != hashParams) {
       return res.json({
         error: 2,
-        description: "Authentication failed. Incorrect secure login and secure password combination.",
+        description:
+          "Authentication failed. Incorrect secure login and secure password combination.",
       });
     }
 
@@ -697,7 +910,8 @@ exports.GetGameLaunch = async (req, res) => {
     if (Number(agents.balance) < 10000) {
       return res.json({
         error: 25,
-        description: "Insufficient Agent funds available to completethe transaction.",
+        description:
+          "Insufficient Agent funds available to completethe transaction.",
       });
     }
 
@@ -720,40 +934,37 @@ exports.GetGameLaunch = async (req, res) => {
       });
     }
 
-    const timestamp = dayjs().format("YYYYMMDDHH");
-    const api = await ApiCredential.findOne();
-    const Sign = await generateSign(timestamp, "launchgame");
-    const currency = await getCurrency(games.support_currency);
-    const postData = {
-      operator_code: api.apikey,
-      member_account: users.aasUserCode,
-      password: users.userCode,
-      nickname: users.userCode,
-      currency: currency,
-      game_code: games.game_code || null,
-      product_code: games.product_code,
-      game_type: games.game_type,
-      language_code: language || 0,
-      ip: "127.0.0.1",
-      platform: platform || "WEB",
-      sign: Sign,
-      request_time: timestamp,
-      operator_lobby_url: lobbyURL || 'https://google.com',
-    };
-    const response = await axios.post(`${api.url}api/operators/launch-game`,postData);
+    const providerscs = await ProviderList.findOne({
+      where: {
+        provider_code: provider_code,
+      },
+    });
 
-    if (response.data.code != 200) {
+    const gtypes = await transformGameData(games.game_type);
+
+    const launchGamesGsResponse = await launchGamesGs(
+      users.aasUserCode,
+      providerscs.product_code,
+      gtypes,
+      game_code,
+      "id-ID"
+    );
+
+    if (launchGamesGsResponse.errCode && launchGamesGsResponse.errCode != 0) {
       return res.json({
-        error: 10,
-        description: "Game is under maintenance",
+        error: launchGamesGsResponse.errCode,
+        description:
+          launchGamesGsResponse.errMsg || "Failed to launch game in Api",
       });
     }
 
     const launchData = await LaunchData.create({
-      uuid: crypto.randomBytes(16).toString('hex'),
-      token: crypto.randomBytes(36).toString('hex') + crypto.randomBytes(32).toString('hex'),
-      content: response.data.content || null,
-      url: response.data.url || null,
+      uuid: crypto.randomBytes(16).toString("hex"),
+      token:
+        crypto.randomBytes(36).toString("hex") +
+        crypto.randomBytes(32).toString("hex"),
+      content: launchGamesGsResponse.content || null,
+      url: launchGamesGsResponse.gameUrl || null,
       expiredAt: new Date(new Date().getTime() + 5 * 60 * 1000),
     });
 
@@ -764,22 +975,60 @@ exports.GetGameLaunch = async (req, res) => {
     };
 
     const query = new URLSearchParams(params).toString();
+    const domain = req.get("Host");
+
+    if (users.lastPlay !== "not") {
+      const balanceResponse = await getBalanceGs(
+        users.aasUserCode,
+        users.lastPlay
+      );
+      if (balanceResponse.errCode && balanceResponse.errCode != 0) {
+        return res.json({
+          error: balanceResponse.errCode,
+          description:
+            balanceResponse.errMsg || "Failed to get balance from Api",
+        });
+      } else if (users.lastPlay !== providerscs.product_code) {
+        if (balanceResponse.balance > 0) {
+          await withdrawGs(
+            users.aasUserCode,
+            users.lastPlay,
+            balanceResponse.balance
+          );
+        }
+        await depositGs(
+          users.aasUserCode,
+          providerscs.product_code,
+          users.balance
+        );
+      }
+    } else {
+      await depositGs(
+        users.aasUserCode,
+        providerscs.product_code,
+        users.balance
+      );
+    }
+
+    if (users.balance > 0) {
+      users.lastPlay = providerscs.product_code;
+      await users.save();
+    }
 
     return res.json({
       error: 0,
       description: "OK",
-      gameURL: `https://${process.env.LAUNCH_URL}/games/${provider_code}/launch?${query}`
+      gameURL: `https://${domain}/games/${provider_code}/launch?${query}`,
     });
-
   } catch (err) {
-    sendError(err, "API | IntegrationService | Launch Game",req.originalUrl);
+    console.error("Error launching game:", err);
+    sendError(err, "API | IntegrationService | Launch Game", req.originalUrl);
     return res.json({
       error: 1,
       description: "Internal error. Try later please",
     });
   }
 };
-
 
 exports.balance_agent = async (req, res) => {
   try {
@@ -788,7 +1037,15 @@ exports.balance_agent = async (req, res) => {
     if (!agents) {
       return res.json({
         error: 2,
-        description: "Authentication failed. Incorrect secure login and secure password combination.",
+        description:
+          "Authentication failed. Incorrect secure login and secure password combination.",
+      });
+    }
+
+    if (agents.status != 1) {
+      return res.json({
+        error: 10000,
+        description: "Agent Blocked.",
       });
     }
 
@@ -796,12 +1053,15 @@ exports.balance_agent = async (req, res) => {
       secureLogin: secureLogin,
       secretKey: agents.secretkey,
     };
-    const hashParams = await generateHash(new URLSearchParams(sechash).toString());
+    const hashParams = await generateHash(
+      new URLSearchParams(sechash).toString()
+    );
 
     if (hash != hashParams) {
       return res.json({
         error: 2,
-        description: "Authentication failed. Incorrect secure login and secure password combination.",
+        description:
+          "Authentication failed. Incorrect secure login and secure password combination.",
       });
     }
 
@@ -811,7 +1071,11 @@ exports.balance_agent = async (req, res) => {
       balance: Number(agents.balance),
     });
   } catch (err) {
-    sendError(err, "API | IntegrationService | Get Agent Balance",'Provider List');
+    sendError(
+      err,
+      "API | IntegrationService | Get Agent Balance",
+      "Provider List"
+    );
     return res.json({
       error: 1,
       description: "Internal error. Try later please",
